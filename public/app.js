@@ -34,8 +34,37 @@ let socket = null;
 function checkAuth() {
     const token = localStorage.getItem('token');
     if (token) {
-        showDashboard();
-        initApp();
+        // Decode token to get user role
+        const userRole = getUserRoleFromToken(token);
+        
+        // Role-based redirection for existing sessions
+        if (userRole === 'admin') {
+            // Redirect to admin panel
+            localStorage.setItem('admin_token', token);
+            window.location.href = '/admin.html';
+        } else if (userRole === 'security_center') {
+            // Redirect to security center
+            localStorage.setItem('admin_token', token);
+            window.location.href = '/security-center.html';
+        } else if (userRole === 'poste') {
+            // Redirect to poste interface
+            localStorage.setItem('poste_token', token);
+            window.location.href = '/poste.html';
+        } else {
+            // Citizen - show dashboard
+            showDashboard();
+            initApp();
+        }
+    }
+}
+
+// Get user role from JWT token
+function getUserRoleFromToken(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.role;
+    } catch (e) {
+        return null;
     }
 }
 
@@ -63,8 +92,25 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             } else {
                 localStorage.setItem('token', data.token);
                 currentUser = data.user;
-                showDashboard();
-                initApp();
+                
+                // Role-based redirection
+                if (currentUser.role === 'admin') {
+                    // Redirect to admin panel
+                    localStorage.setItem('admin_token', data.token);
+                    window.location.href = '/admin.html';
+                } else if (currentUser.role === 'security_center') {
+                    // Redirect to security center
+                    localStorage.setItem('admin_token', data.token);
+                    window.location.href = '/security-center.html';
+                } else if (currentUser.role === 'poste') {
+                    // Redirect to poste interface
+                    localStorage.setItem('poste_token', data.token);
+                    window.location.href = '/poste.html';
+                } else {
+                    // Citizen - stay on current interface
+                    showDashboard();
+                    initApp();
+                }
             }
         } else {
             showToast(data.error || 'Erreur de connexion', 'error');
@@ -92,8 +138,25 @@ document.getElementById('verify-2fa-form').addEventListener('submit', async (e) 
         if (response.ok) {
             localStorage.setItem('token', data.token);
             currentUser = data.user;
-            showDashboard();
-            initApp();
+            
+            // Role-based redirection after 2FA
+            if (currentUser.role === 'admin') {
+                // Redirect to admin panel
+                localStorage.setItem('admin_token', data.token);
+                window.location.href = '/admin.html';
+            } else if (currentUser.role === 'security_center') {
+                // Redirect to security center
+                localStorage.setItem('admin_token', data.token);
+                window.location.href = '/security-center.html';
+            } else if (currentUser.role === 'poste') {
+                // Redirect to poste interface
+                localStorage.setItem('poste_token', data.token);
+                window.location.href = '/poste.html';
+            } else {
+                // Citizen - stay on current interface
+                showDashboard();
+                initApp();
+            }
         } else {
             showToast(data.error || 'Code invalide', 'error');
         }
@@ -142,6 +205,8 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
 // Logout
 document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('poste_token');
     currentUser = null;
     if (socket) {
         socket.disconnect();

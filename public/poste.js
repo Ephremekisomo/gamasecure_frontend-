@@ -52,6 +52,17 @@ const posteEmergencyTypes = {
 function checkAuth() {
     const token = localStorage.getItem('poste_token');
     if (token) {
+        // Check if this is a token from citizen interface login
+        try {
+            const tokenData = JSON.parse(atob(token.split('.')[1]));
+            if (tokenData.role === 'poste' && tokenData.poste) {
+                // Token from citizen interface - extract poste info
+                selectedPoste = tokenData.poste;
+                localStorage.setItem('poste_name', posteNames[tokenData.poste] || 'Poste');
+            }
+        } catch (e) {
+            // Token from direct poste login - already has poste info
+        }
         showDashboard();
         initApp();
     }
@@ -109,6 +120,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('poste_token');
     localStorage.removeItem('poste_name');
+    localStorage.removeItem('token');
+    localStorage.removeItem('admin_token');
     currentUser = null;
     selectedPoste = null;
     showSection('login-section');

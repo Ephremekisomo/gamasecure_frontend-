@@ -65,6 +65,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
 document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('poste_token');
     currentUser = null;
     if (socket) socket.disconnect();
     showSection('login-section');
