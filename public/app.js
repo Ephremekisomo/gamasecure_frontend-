@@ -6,8 +6,8 @@
 // CONFIGURATION
 // =====================
 
-const API_URL = '';
-const SOCKET_URL = '';
+const API_URL = 'https://gomasecure-backend.onrender.com';
+const SOCKET_URL = 'https://gomasecure-backend.onrender.com';
 
 // Goma default coordinates
 const DEFAULT_LAT = -1.6585;
