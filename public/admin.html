@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Goma Security - Administration</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="admin.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Login -->
+        <section id="login-section" class="active">
+            <div class="login-container">
+                <div class="logo">
+                    <i class="fas fa-user-shield"></i>
+                    <h1>Administration</h1>
+                </div>
+                <p class="tagline">Goma Security - Panel Administrateur</p>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-telephone">
+                            <i class="fas fa-phone"></i> Telephone administrateur
+                        </label>
+                        <input type="tel" id="login-telephone" placeholder="+243..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">
+                            <i class="fas fa-lock"></i> Mot de passe
+                        </label>
+                        <input type="password" id="login-password" placeholder="Mot de passe" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Connexion
+                    </button>
+                </form>
+                
+                <div class="back-link">
+                    <a href="/">
+                        <i class="fas fa-arrow-left"></i> Retour aux citoyens
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="dashboard-section">
+            <div class="dashboard-container">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <div class="sidebar-header">
+                        <div class="logo-small">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Admin Panel</span>
+                        </div>
+                        <button id="btn-toggle-sidebar" class="icon-btn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                    
+                    <nav class="sidebar-nav">
+                        <ul>
+                            <li class="nav-item active" data-section="dashboard">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Tableau de bord</span>
+                            </li>
+                            <li class="nav-item" data-section="alerts">
+                                <i class="fas fa-bell"></i>
+                                <span>Alertes</span>
+                                <span class="badge" id="alerts-badge">0</span>
+                            </li>
+                            <li class="nav-item" data-section="users">
+                                <i class="fas fa-users"></i>
+                                <span>Utilisateurs</span>
+                            </li>
+                            <li class="nav-item" data-section="chat">
+                                <i class="fas fa-comments"></i>
+                                <span>Messages</span>
+                                <span class="badge" id="chat-badge">0</span>
+                            </li>
+                            <li class="nav-item" data-section="posts">
+                                <i class="fas fa-building"></i>
+                                <span>Postes</span>
+                            </li>
+                            <li class="nav-item" data-section="emergency-types">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Types d'urgence</span>
+                            </li>
+                            <li class="nav-item" data-section="system">
+                                <i class="fas fa-server"></i>
+                                <span>Systeme</span>
+                            </li>
+                            <li class="nav-item" data-section="settings">
+                                <i class="fas fa-cog"></i>
+                                <span>Parametres</span>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <div class="sidebar-footer">
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-details">
+                                <span class="user-name" id="admin-name">Admin</span>
+                                <span class="user-role">Administrateur</span>
+                            </div>
+                        </div>
+                        <button id="btn-logout" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Deconnexion</span>
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Main Content -->
+                <main class="main-content">
+                    <!-- Header -->
+                    <header class="main-header">
+                        <div class="header-left">
+                            <h1 id="page-title">Tableau de bord</h1>
+                        </div>
+                        <div class="header-right">
+                            <div class="header-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value" id="stat-active">0</span>
+                                    <span class="stat-label">Actives</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="stat-progress">0</span>
+                                    <span class="stat-label">En cours</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="stat-resolved">0</span>
+                                    <span class="stat-label">Resolues</span>
+                                </div>
+                            </div>
+                            <button id="btn-refresh" class="icon-btn" title="Rafraichir">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </header>
+
+                    <!-- Content Sections -->
+                    <div class="content-wrapper">
+                        <!-- Dashboard Section -->
+                        <div id="section-dashboard" class="content-section active">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon bg-primary">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="total-users">0</span>
+                                        <span class="stat-text">Utilisateurs</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon bg-danger">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="total-alerts">0</span>
+                                        <span class="stat-text">Alertes totales</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon bg-success">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="total-resolved">0</span>
+                                        <span class="stat-text">Alertes resolues</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon bg-warning">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-number" id="total-messages">0</span>
+                                        <span class="stat-text">Messages</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-grid">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3><i class="fas fa-chart-pie"></i> Alertes par type</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="alerts-by-type-chart" class="chart-container"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3><i class="fas fa-clock"></i> Alertes recentes</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recent-alerts" class="recent-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alerts Section -->
+                        <div id="section-alerts" class="content-section">
+                            <div class="section-header">
+                                <div class="filters">
+                                    <select id="filter-alert-status">
+                                        <option value="">Tous les statuts</option>
+                                        <option value="active">Active</option>
+                                        <option value="en_cours">En cours</option>
+                                        <option value="resolu">Resolu</option>
+                                    </select>
+                                    <select id="filter-alert-priority">
+                                        <option value="">Toutes les priorites</option>
+                                        <option value="1">Urgence (1)</option>
+                                        <option value="2">Haute (2)</option>
+                                        <option value="3">Moyenne (3)</option>
+                                        <option value="4">Basse (4)</option>
+                                    </select>
+                                    <button id="btn-filter-alerts" class="btn-secondary">
+                                        <i class="fas fa-filter"></i> Filtrer
+                                    </button>
+                                </div>
+                                <div class="actions">
+                                    <button id="btn-export-alerts" class="btn-secondary">
+                                        <i class="fas fa-download"></i> Exporter
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table id="alerts-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Type</th>
+                                            <th>Citoyen</th>
+                                            <th>Statut</th>
+                                            <th>Priorite</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="alerts-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Users Section -->
+                        <div id="section-users" class="content-section">
+                            <div class="section-header">
+                                <div class="search-box">
+                                    <input type="text" id="search-users" placeholder="Rechercher un utilisateur...">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="actions">
+                                    <button id="btn-add-user" class="btn-primary">
+                                        <i class="fas fa-plus"></i> Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table id="users-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nom</th>
+                                            <th>Telephone</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Quartier</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Chat Section -->
+                        <div id="section-chat" class="content-section">
+                            <div class="chat-container">
+                                <div class="chat-users-panel">
+                                    <div class="panel-header">
+                                        <h3>Conversations</h3>
+                                    </div>
+                                    <div id="chat-users-list" class="chat-users-list"></div>
+                                </div>
+                                <div class="chat-messages-panel">
+                                    <div class="panel-header">
+                                        <h3 id="chat-conversation-title">Selectionnez une conversation</h3>
+                                    </div>
+                                    <div id="admin-chat-messages" class="chat-messages"></div>
+                                    <form id="admin-chat-form" class="chat-input-area">
+                                        <button type="button" id="btn-voice-admin" class="icon-btn voice-btn" title="Envoyer un message vocal">
+                                            <i class="fas fa-microphone"></i>
+                                        </button>
+                                        <input type="text" id="admin-chat-input" placeholder="Tapez votre message...">
+                                        <button type="submit" class="btn-primary">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Posts Section -->
+                        <div id="section-posts" class="content-section">
+                            <div class="section-header">
+                                <h2>Gestion des Postes</h2>
+                            </div>
+                            <div class="posts-grid" id="posts-grid"></div>
+                        </div>
+
+                        <!-- Emergency Types Section -->
+                        <div id="section-emergency-types" class="content-section">
+                            <div class="section-header">
+                                <h2>Types d'urgence</h2>
+                                <button id="btn-add-emergency-type" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Ajouter
+                                </button>
+                            </div>
+                            <div class="emergency-types-grid" id="emergency-types-grid"></div>
+                        </div>
+
+                        <!-- System Section -->
+                        <div id="section-system" class="content-section">
+                            <div class="system-grid">
+                                <div class="system-card">
+                                    <div class="system-card-header">
+                                        <i class="fas fa-database"></i>
+                                        <h3>Base de donnees</h3>
+                                    </div>
+                                    <div class="system-card-body">
+                                        <div class="system-status" id="db-status">
+                                            <span class="status-indicator online"></span>
+                                            <span class="status-text">Connecte</span>
+                                        </div>
+                                        <div class="system-info">
+                                            <div class="info-row">
+                                                <span class="info-label">Type:</span>
+                                                <span class="info-value">SQLite</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Fichier:</span>
+                                                <span class="info-value" id="db-path">./goma_security.db</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Taille:</span>
+                                                <span class="info-value" id="db-size">--</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Tables:</span>
+                                                <span class="info-value" id="db-tables">--</span>
+                                            </div>
+                                        </div>
+                                        <button id="btn-backup-db" class="btn-secondary">
+                                            <i class="fas fa-download"></i> Sauvegarder
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="system-card">
+                                    <div class="system-card-header">
+                                        <i class="fas fa-server"></i>
+                                        <h3>Serveur</h3>
+                                    </div>
+                                    <div class="system-card-body">
+                                        <div class="system-status" id="server-status">
+                                            <span class="status-indicator online"></span>
+                                            <span class="status-text">En ligne</span>
+                                        </div>
+                                        <div class="system-info">
+                                            <div class="info-row">
+                                                <span class="info-label">Port:</span>
+                                                <span class="info-value" id="server-port">3000</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Environnement:</span>
+                                                <span class="info-value" id="server-env">development</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Temps de fonctionnement:</span>
+                                                <span class="info-value" id="server-uptime">--</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Memoire utilisee:</span>
+                                                <span class="info-value" id="server-memory">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="system-card">
+                                    <div class="system-card-header">
+                                        <i class="fas fa-plug"></i>
+                                        <h3>Socket.IO</h3>
+                                    </div>
+                                    <div class="system-card-body">
+                                        <div class="system-status" id="socket-status">
+                                            <span class="status-indicator online"></span>
+                                            <span class="status-text">Actif</span>
+                                        </div>
+                                        <div class="system-info">
+                                            <div class="info-row">
+                                                <span class="info-label">Connexions actives:</span>
+                                                <span class="info-value" id="socket-connections">0</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Messages envoyes:</span>
+                                                <span class="info-value" id="socket-messages">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="system-card">
+                                    <div class="system-card-header">
+                                        <i class="fas fa-hdd"></i>
+                                        <h3>Stockage</h3>
+                                    </div>
+                                    <div class="system-card-body">
+                                        <div class="system-info">
+                                            <div class="info-row">
+                                                <span class="info-label">Photos:</span>
+                                                <span class="info-value" id="storage-photos">0 fichiers</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Messages vocaux:</span>
+                                                <span class="info-value" id="storage-voices">0 fichiers</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Taille totale:</span>
+                                                <span class="info-value" id="storage-total">--</span>
+                                            </div>
+                                        </div>
+                                        <button id="btn-cleanup-storage" class="btn-secondary">
+                                            <i class="fas fa-broom"></i> Nettoyer
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="system-card">
+                                    <div class="system-card-header">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <h3>Securite</h3>
+                                    </div>
+                                    <div class="system-card-body">
+                                        <div class="system-info">
+                                            <div class="info-row">
+                                                <span class="info-label">JWT Secret:</span>
+                                                <span class="info-value" id="jwt-status">Configure</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Rate Limiting:</span>
+                                                <span class="info-value" id="rate-limit-status">Actif</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">CORS:</span>
+                                                <span class="info-value" id="cors-status">Actif</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Helmet:</span>
+                                                <span class="info-value" id="helmet-status">Actif</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="system-card">
+                                    <div class="system-card-header">
+                                        <i class="fas fa-chart-line"></i>
+                                        <h3>Statistiques</h3>
+                                    </div>
+                                    <div class="system-card-body">
+                                        <div class="system-info">
+                                            <div class="info-row">
+                                                <span class="info-label">Requetes totales:</span>
+                                                <span class="info-value" id="total-requests">0</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Erreurs:</span>
+                                                <span class="info-value" id="total-errors">0</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Derniere alerte:</span>
+                                                <span class="info-value" id="last-alert-time">--</span>
+                                            </div>
+                                        </div>
+                                        <button id="btn-view-logs" class="btn-secondary">
+                                            <i class="fas fa-file-alt"></i> Voir les logs
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Section -->
+                        <div id="section-settings" class="content-section">
+                            <div class="settings-grid">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3><i class="fas fa-user-cog"></i> Profil Administrateur</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="admin-profile-form">
+                                            <div class="form-group">
+                                                <label for="admin-nom">Nom</label>
+                                                <input type="text" id="admin-nom" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="admin-prenom">Prenom</label>
+                                                <input type="text" id="admin-prenom" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="admin-email">Email</label>
+                                                <input type="email" id="admin-email">
+                                            </div>
+                                            <button type="submit" class="btn-primary">
+                                                <i class="fas fa-save"></i> Enregistrer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3><i class="fas fa-lock"></i> Securite</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="change-password-form">
+                                            <div class="form-group">
+                                                <label for="current-password">Mot de passe actuel</label>
+                                                <input type="password" id="current-password" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="new-password">Nouveau mot de passe</label>
+                                                <input type="password" id="new-password" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="confirm-password">Confirmer le mot de passe</label>
+                                                <input type="password" id="confirm-password" required>
+                                            </div>
+                                            <button type="submit" class="btn-primary">
+                                                <i class="fas fa-key"></i> Changer le mot de passe
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+        
+        <!-- Modal -->
+        <div id="modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-title">Modal</h3>
+                    <button class="close-modal" id="close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

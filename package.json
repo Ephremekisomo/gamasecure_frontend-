@@ -1,0 +1,27 @@
+{
+  "name": "goma-security-frontend",
+  "version": "1.0.0",
+  "description": "Frontend pour l'application de securite urbaine de Goma, RDC",
+  "main": "public/index.html",
+  "scripts": {
+    "start": "npx serve public -p 3000",
+    "dev": "npx serve public -p 3000 --live",
+    "build": "echo 'No build step required for static files'"
+  },
+  "keywords": [
+    "security",
+    "emergency",
+    "goma",
+    "drc",
+    "frontend",
+    "pwa"
+  ],
+  "author": "Goma Security Team",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

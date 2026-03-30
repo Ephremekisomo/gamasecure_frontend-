@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Goma Security - Poste de Securite</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="poste.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login -->
+        <section id="login-section" class="active">
+            <div class="login-container">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Poste de Securite</h1>
+                </div>
+                <p class="tagline">Goma, Republique Democratique du Congo</p>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-poste">
+                            <i class="fas fa-building"></i> Nom du poste
+                        </label>
+                        <input type="text" id="login-poste" placeholder="Police, Pompiers, Ambulance..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">
+                            <i class="fas fa-lock"></i> Mot de passe
+                        </label>
+                        <input type="password" id="login-password" placeholder="Mot de passe" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Connexion
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="dashboard-section">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="logo-small">
+                        <i class="fas fa-user-shield"></i>
+                        <span id="poste-name">Poste</span>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-badge pending">
+                            <span id="stat-pending">0</span>
+                            <small>En attente</small>
+                        </div>
+                        <div class="stat-badge in-progress">
+                            <span id="stat-progress">0</span>
+                            <small>En cours</small>
+                        </div>
+                        <div class="stat-badge resolved">
+                            <span id="stat-resolved">0</span>
+                            <small>Resolu</small>
+                        </div>
+                    </div>
+                    <div class="user-menu">
+                        <button id="btn-sound-toggle" class="icon-btn" title="Activer/Desactiver le son">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="btn-call-reinforcement" class="btn-reinforcement" title="Appeler des renforts">
+                            <i class="fas fa-bullhorn"></i> Renfort
+                        </button>
+                        <button id="btn-logout" class="icon-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Alerts List -->
+                <div class="alerts-container">
+                    <h2><i class="fas fa-bell"></i> Alertes attribuees a ce poste</h2>
+                    <div id="alerts-list" class="alerts-list"></div>
+                </div>
+
+                <!-- Alert Details Panel -->
+                <div id="alert-details" class="details-panel hidden">
+                    <div class="details-header">
+                        <h3>Details de l'alerte</h3>
+                        <button id="close-details" class="close-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="details-body">
+                        <div class="detail-row">
+                            <span class="label">Type:</span>
+                            <span id="detail-type" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Statut:</span>
+                            <span id="detail-status" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Citoyen:</span>
+                            <span id="detail-user" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Telephone:</span>
+                            <span id="detail-telephone" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Description:</span>
+                            <span id="detail-description" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Localisation:</span>
+                            <span id="detail-location" class="value"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Cree le:</span>
+                            <span id="detail-created" class="value"></span>
+                        </div>
+                        
+                        <!-- Track Location Button -->
+                        <div class="track-section">
+                            <button id="btn-track" class="btn-track">
+                                <i class="fas fa-map-marker-alt"></i> Suivre sur Google Maps
+                            </button>
+                        </div>
+                        
+                        <!-- Status Actions -->
+                        <div class="status-actions">
+                            <h4>Changer le statut</h4>
+                            <div class="action-buttons">
+                                <button class="btn-status pending" data-status="active">
+                                    <i class="fas fa-clock"></i> En attente
+                                </button>
+                                <button class="btn-status in_progress" data-status="en_cours">
+                                    <i class="fas fa-spinner"></i> En cours
+                                </button>
+                                <button class="btn-status resolved" data-status="resolu">
+                                    <i class="fas fa-check-circle"></i> Resolu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="poste.js"></script>
+</body>
+</html>

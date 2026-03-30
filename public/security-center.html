@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Goma Security - Centre de Securite</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="security-center.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Login -->
+        <section id="login-section" class="active">
+            <div class="login-container">
+                <div class="logo">
+                    <i class="fas fa-building-shield"></i>
+                    <h1>Centre de Securite</h1>
+                </div>
+                <p class="tagline">Goma, Republique Democratique du Congo</p>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-telephone">
+                            <i class="fas fa-phone"></i> Telephone administrateur
+                        </label>
+                        <input type="tel" id="login-telephone" placeholder="+243..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">
+                            <i class="fas fa-lock"></i> Mot de passe
+                        </label>
+                        <input type="password" id="login-password" placeholder="Mot de passe" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Connexion
+                    </button>
+                </form>
+                
+                <div class="back-link">
+                    <a href="/">
+                        <i class="fas fa-arrow-left"></i> Retour aux citoyens
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="dashboard-section">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="logo-small">
+                        <i class="fas fa-building-shield"></i>
+                        <span>Centre de Securite</span>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-badge active">
+                            <span id="stat-active">0</span>
+                            <small>Actives</small>
+                        </div>
+                        <div class="stat-badge progress">
+                            <span id="stat-progress">0</span>
+                            <small>En cours</small>
+                        </div>
+                        <div class="stat-badge resolved">
+                            <span id="stat-resolved">0</span>
+                            <small>Resolues</small>
+                        </div>
+                    </div>
+                    <div class="user-menu">
+                        <button id="btn-admin-chat" class="icon-btn" title="Messages">
+                            <i class="fas fa-comments"></i>
+                            <span id="chat-badge" class="notification-badge hidden">0</span>
+                        </button>
+                        <button id="btn-sound-toggle" class="icon-btn" title="Activer/Desactiver le son">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="btn-logout" class="icon-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <!-- Filters -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-filter"></i> Filtres</h3>
+                        
+                        <div class="filter-group">
+                            <label>Statut</label>
+                            <select id="filter-status">
+                                <option value="">Tous</option>
+                                <option value="active">Active</option>
+                                <option value="en_cours">En cours</option>
+                                <option value="resolu">Resolu</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Priorite</label>
+                            <select id="filter-priority">
+                                <option value="">Toutes</option>
+                                <option value="1">Urgence (1)</option>
+                                <option value="2">Haute (2)</option>
+                                <option value="3">Moyenne (3)</option>
+                                <option value="4">Basse (4)</option>
+                            </select>
+                        </div>
+                        
+                        <button id="apply-filters" class="btn-secondary btn-sm">
+                            <i class="fas fa-check"></i> Appliquer
+                        </button>
+                    </div>
+
+                    <!-- Export -->
+                    <div class="export-section">
+                        <h3><i class="fas fa-download"></i> Exporter</h3>
+                        <div class="export-buttons">
+                            <button id="export-pdf" class="btn-sm btn-outline">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button id="export-excel" class="btn-sm btn-outline">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button id="export-json" class="btn-sm btn-outline">
+                                <i class="fas fa-file-code"></i> JSON
+                            </button>
+                            <button id="export-csv" class="btn-sm btn-outline">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                        <button id="print-report" class="btn-sm btn-outline">
+                            <i class="fas fa-print"></i> Imprimer
+                        </button>
+                    </div>
+
+                    <!-- Alert List -->
+                    <div class="alerts-sidebar">
+                        <h3><i class="fas fa-list"></i> Alertes</h3>
+                        <div id="sidebar-alerts" class="alerts-list"></div>
+                    </div>
+                </aside>
+
+                <!-- Map and Details -->
+                <main class="content-area">
+                    <div id="map" class="map-container"></div>
+                    
+                    <!-- Modal Overlay for Details -->
+                    <div id="details-overlay" class="modal-overlay hidden"></div>
+                    
+                    <!-- Alert Details Panel -->
+                    <div id="alert-details" class="details-panel hidden">
+                        <div class="details-header">
+                            <h3>Details de l'alerte</h3>
+                            <button id="close-details" class="close-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="details-body">
+                            <div class="detail-row">
+                                <span class="label">Type:</span>
+                                <span id="detail-type" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Statut:</span>
+                                <span id="detail-status" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Priorite:</span>
+                                <span id="detail-priority" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Citoyen:</span>
+                                <span id="detail-user" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Telephone:</span>
+                                <span id="detail-telephone" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Description:</span>
+                                <span id="detail-description" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Localisation:</span>
+                                <span id="detail-location" class="value"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Cree le:</span>
+                                <span id="detail-created" class="value"></span>
+                            </div>
+                            
+                            <div class="status-actions">
+                                <h4>Changer le statut</h4>
+                                <div class="action-buttons">
+                                    <button class="btn-status active" data-status="active">
+                                        <i class="fas fa-exclamation-circle"></i> Active
+                                    </button>
+                                    <button class="btn-status en_cours" data-status="en_cours">
+                                        <i class="fas fa-spinner"></i> En cours
+                                    </button>
+                                    <button class="btn-status resolu" data-status="resolu">
+                                        <i class="fas fa-check-circle"></i> Resolu
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Photo -->
+                            <div id="alert-photo-container" class="photo-section hidden">
+                                <h4>Photo jointe</h4>
+                                <img id="alert-photo" src="" alt="Photo de l'alerte">
+                            </div>
+                            
+                            <!-- Route Button -->
+                            <div class="route-section">
+                                <button id="btn-route" class="btn-route" style="display: none;">
+                                    <i class="fas fa-directions"></i> Voir l'itineraire sur Google Maps
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+        
+        <!-- Admin Chat Panel -->
+        <div id="admin-chat-panel" class="admin-chat-panel">
+            <div class="chat-panel-header">
+                <h3><i class="fas fa-comments"></i> Messages</h3>
+                <button id="close-admin-chat" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-users-list" id="chat-users-list">
+                <!-- Users will be loaded here -->
+            </div>
+            <div class="chat-conversation hidden" id="chat-conversation">
+                <div class="chat-conversation-header">
+                    <button id="back-to-users" class="icon-btn">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <span id="chat-user-name"></span>
+                </div>
+                <div class="chat-messages" id="admin-chat-messages"></div>
+                <form id="admin-chat-form" class="chat-input-area">
+                    <button type="button" id="btn-voice-admin" class="icon-btn voice-btn" title="Envoyer un message vocal">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <input type="text" id="admin-chat-input" placeholder="Tapez votre message...">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Photo Modal -->
+        <div id="photo-modal" class="photo-modal hidden">
+            <button class="close-photo" id="close-photo-modal">&times;</button>
+            <img id="modal-photo" src="" alt="Photo de l'alerte">
+        </div>
+    </div>
+    
+    <!-- Global Modals - Outside #app for proper centering -->
+    <div id="assign-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Assigner l'alerte a un poste</h3>
+                <button class="close-modal" data-modal="assign-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Selectionnez le poste qui traitera cette urgence:</p>
+                <div class="postes-grid">
+                    <button class="poste-btn" data-poste="poste1">
+                        <i class="fas fa-user-police"></i>
+                        <span>Police</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste2">
+                        <i class="fas fa-fire-extinguisher"></i>
+                        <span>Pompiers</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste3">
+                        <i class="fas fa-ambulance"></i>
+                        <span>Ambulance</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste4">
+                        <i class="fas fa-hard-hat"></i>
+                        <span>Protection civile</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste5">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Gendarmerie</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste6">
+                        <i class="fas fa-user-secret"></i>
+                        <span>Intelligence</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste7">
+                        <i class="fas fa-building"></i>
+                        <span>Administration</span>
+                    </button>
+                    <button class="poste-btn" data-poste="poste8">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Urgence majeurs</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="security-center.js"></script>
+</body>
+</html>
