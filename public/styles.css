@@ -264,7 +264,7 @@ section.active {
 #dashboard-section {
     display: none;
     padding: 0;
-    background: var(--light-color);
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #0d0d1a 100%);
     min-height: 100vh;
     width: 100%;
 }
@@ -336,11 +336,13 @@ section.active {
 .emergency-section {
     padding: 30px 20px;
     text-align: center;
-    background: white;
+    background: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
+    min-height: calc(100vh - 70px);
+    flex: 1;
 }
 
 .emergency-button {
@@ -348,10 +350,10 @@ section.active {
     color: white;
     border: none;
     padding: 0;
-    width: 180px;
-    height: 180px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
@@ -359,15 +361,15 @@ section.active {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin: 0 auto;
-    box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+    box-shadow: 0 15px 40px rgba(231, 76, 60, 0.5), 0 0 60px rgba(231, 76, 60, 0.3);
     animation: pulse 2s infinite;
 }
 
 .emergency-button.round {
-    width: 200px;
-    height: 200px;
+    width: 240px;
+    height: 240px;
     border-radius: 50%;
 }
 
